@@ -1,10 +1,14 @@
-const mongoos = require('mongoose');
-const connectDB = async()=>{
+const mongoose = require('mongoose');
+require('dotenv').config();
+
+const connectDB = async () => {
     try {
-        await mongoos.connect('mongodb+srv://deadlock:asrasr123@cluster0.mnhdnpb.mongodb.net/?retryWrites=true&w=majority')
-            console.log("Connected!!!")
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("MongoDB connected successfully.");
     } catch (error) {
-        console.log("Not Connected!!")
+        console.error("MongoDB connection failed:", error.message);
+        process.exit(1);
     }
-}
-module.exports = connectDB
+};
+
+module.exports = connectDB;

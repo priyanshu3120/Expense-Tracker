@@ -1,139 +1,175 @@
-import React, { useEffect, useState } from 'react'
-import {  useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Items from '../components/Items';
 import { Chartss } from '../components/Chartss';
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
 import LoadingBar from 'react-top-loading-bar';
-// import { toast } from 'react-hot-toast';
 import { createExpense, getUserExpenses } from '../utils/renders';
 import NavBar from '../components/NavBar';
-import { useRef } from 'react';
+import { toast } from 'react-hot-toast';
 
+document.title = 'Dashboard — Expense Tracker';
+
+const CATEGORIES = ['Grocery', 'Vehicle', 'Shopping', 'Travel', 'Food', 'Fun', 'Other'];
 
 function Home() {
   const navigate = useNavigate();
-  const [selectDate, setSelectedDate] = useState("");
-  const [amount , setAmount] = useState(0);
-  const [category , setCategory] = useState("");
-  const [userdata , ] = useState(JSON.parse(localStorage.getItem('User')));
-  const [userexp , setUserexp] = useState([]);
+  const [selectDate, setSelectedDate] = useState(null);
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('');
+  const [userdata] = useState(JSON.parse(localStorage.getItem('User')));
+  const [userexp, setUserexp] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const ref = useRef(null);
 
-
-  document.title='Home'
-
-  
-
-  // logout
-
-useEffect(()=>{
-  // if delete from application in console
-  // eslint-disable-next-line 
-  if(!localStorage.getItem('User'))
-  {
-    navigate('/login')
-  }
-  // eslint-disable-next-line 
-  setUserexp(Promise.resolve(getUserExpenses(userdata._id)).then((data)=>setUserexp(data)))
-
-}, [userdata._id, navigate]);
-
-
-const getTotal= ()=>{
-    let sum = 0;
-    for(const item in userexp)
-    {
-      sum += userexp[item].amount
+  useEffect(() => {
+    if (!localStorage.getItem('token') || !localStorage.getItem('User')) {
+      navigate('/login');
+      return;
     }
-    return sum;
-}
+    getUserExpenses(userdata._id).then((data) => {
+      setUserexp(data || []);
+      setIsLoading(false);
+    });
+    // eslint-disable-next-line
+  }, []);
 
-  // console.log(userexp)
+  const getTotal = () => {
+    return userexp.reduce((sum, item) => sum + item.amount, 0);
+  };
+
+  const handleCreateExpense = () => {
+    if (!amount || Number(amount) <= 0) {
+      toast.error("Please enter a valid amount.");
+      return;
+    }
+    if (!category) {
+      toast.error("Please select a category.");
+      return;
+    }
+    if (!selectDate) {
+      toast.error("Please select a date.");
+      return;
+    }
+    const expInfo = {
+      usersid: userdata._id,
+      category,
+      date: selectDate,
+      amount: Number(amount),
+    };
+    ref.current.staticStart();
+    createExpense(expInfo);
+    ref.current.complete();
+  };
+
   return (
-    <div className=' h-screen font-mont w-full  bg-zinc-900'>
-      <LoadingBar color='orange' ref={ref}  ></LoadingBar>
-       <NavBar data = {userexp}></NavBar>
-        {/* Feed */}
-        <div className='Feed  w-4/5 left-[calc(100%-90%)] relative h-[calc(100%-6rem)] flex  ' >
-          <div className='leftbox w-1/2 h-full ' >
-            <div className='p-6 h-full w-full' >
-            <Chartss exdata = {userexp}></Chartss>
-            </div>
-            
-          </div>
-          <div className='rightbox flex flex-col gap-10 items-center w-1/2   '>
-            {/* /////////////////////////// */}
-            <div className='createnew bg-gray-800 w-auto rounded-3xl p-10 pb-6 pt-6 flex flex-col justify-center items-center  gap-2 relative top-5 ' >
-                <div className='font-bold text-3xl text-white font-mont  ' >Create Transaction</div>
-                <div className='flex flex-row gap-4 ' >
-                  <input type='number' onChange={(e)=>setAmount(e.target.value)} placeholder='Amount ' className='h-12 w-auto text-base placeholder-black  p-4 rounded-xl outline-none focus:focus-animation '  ></input>
-                  <select id="countries" onChange={(e)=>{setCategory(e.target.value); console.log(category)}} defaultValue='selected' className="bg-white w-auto outline-none border placeholder-black border-gray-300 text-gray-900 text-sm rounded-xl block   p-2.5 focus:focus-animation ">
-                    <option value="" >--Select--</option>
-                    <option value="Grocery">Grocery</option>
-                    <option value="Vehicle">Vehicle</option>
-                    <option value="Shopping">Shopping</option>
-                    <option value="Travel">Travel</option>
-                    <option value="Food" >Food</option>
-                    <option value="Fun" >Fun</option>
-                    <option value="Other" >Other</option>
-                  </select>
-                </div>
-                <div className='grid grid-flow-col w-full  '>
-                  <div className='w-full'>
+    <div className="home-bg">
+      <LoadingBar color='#f59e0b' ref={ref} />
+      <NavBar data={userexp} />
 
-                      <DatePicker
-                      selected={selectDate}
-                      onChange={(date) => {
-                        console.log(date)
-                        setSelectedDate(date);
-                      }}
-                      className="p-3 placeholder-black w-2/2 rounded-xl outline-none bg-jp-black px-4 placeholder-rp-yellow h-fit   text-jp-white focus:focus-animation"
-                      placeholderText="Date"
-                      showYearDropdown
-                      />
-                  </div>
-                
-                <a onClick={()=>{
-                    const expInfo = {
-                      // amount , category , date , usersid
-                      usersid : userdata._id,
-                      category ,
-                      date : selectDate ,
-                      amount 
-
-                    }
-                    ref.current.staticStart();
-                    createExpense(expInfo);
-                    ref.current.complete();
-                  }} href="#_" className="relative h-fit text-center w-full rounded-xl px-5 py-2 overflow-hidden group bg-gray-800 border-2 hover:bg-gradient-to-r hover:from-indigo-600 hover:to-indigo-600 text-white hover:ring-2 hover:ring-offset-2 hover:ring-indigo-600 transition-all ease-out duration-300">
-                <span className="absolute right-0 w-8 h-10 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-40 ease"></span>
-                <span className="relative font-bold text-2xl">+</span>
-                </a>
-                
-                </div>
-            
-            </div>
-
-            {/* ////////  Creation Ended Here /////////////////// */}
-
-            <div className='w-5/6 p-7  relative  rounded-xl h-auto  border-white border-2  grid gap-7  overflow-y-scroll '>
-                  <div className='text-3xl text-white font-bold font-mont ' >Total Expense : ₹ {getTotal()}</div>
-                  <div className='grid grid-cols-2 listrr gap-7'>
-                    {
-                      Object.keys(userexp).map((items) => <Items key = {userexp[items]._id} data = {userexp[items]} ></Items>)
-
-                    }
-                      
-                  </div>
-                  
-            </div>
+      <div className="dashboard">
+        {/* Left: Chart */}
+        <div className="dashboard-left">
+          <div className="chart-panel">
+            <Chartss exdata={userexp} />
           </div>
 
+          {/* Stats */}
+          <div className="stats-panel">
+            <div className="stat-card">
+              <span className="stat-label">Total Spent</span>
+              <span className="stat-value">₹{getTotal().toLocaleString('en-IN')}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Transactions</span>
+              <span className="stat-value">{userexp.length}</span>
+            </div>
+          </div>
         </div>
-        
+
+        {/* Right: Form + Expense List */}
+        <div className="dashboard-right">
+          {/* Create Transaction */}
+          <div className="create-card">
+            <h2 className="create-title">➕ New Transaction</h2>
+            <div className="create-row">
+              <div className="input-group-home">
+                <label className="input-label">Amount (₹)</label>
+                <input
+                  id="expense-amount"
+                  type="number"
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0"
+                  value={amount}
+                  className="home-input"
+                  min="1"
+                />
+              </div>
+              <div className="input-group-home">
+                <label className="input-label">Category</label>
+                <select
+                  id="expense-category"
+                  onChange={(e) => setCategory(e.target.value)}
+                  defaultValue=""
+                  className="home-input home-select"
+                >
+                  <option value="" disabled>Select...</option>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="input-group-home">
+                <label className="input-label">Date</label>
+                <DatePicker
+                  selected={selectDate}
+                  onChange={(date) => setSelectedDate(date)}
+                  className="home-input"
+                  placeholderText="Pick a date"
+                  showYearDropdown
+                  maxDate={new Date()}
+                />
+              </div>
+            </div>
+            <button
+              id="add-expense-btn"
+              onClick={handleCreateExpense}
+              className="add-btn"
+            >
+              Add Expense
+            </button>
+          </div>
+
+          {/* Expense List */}
+          <div className="expense-list-panel">
+            <div className="expense-list-header">
+              <h2 className="expense-list-title">Recent Transactions</h2>
+              <span className="expense-total-badge">Total: ₹{getTotal().toLocaleString('en-IN')}</span>
+            </div>
+
+            {isLoading ? (
+              <div className="loading-state">
+                {[1,2,3].map(i => <div key={i} className="skeleton-card" />)}
+              </div>
+            ) : userexp.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">💸</div>
+                <p className="empty-title">No expenses yet</p>
+                <p className="empty-sub">Add your first transaction above</p>
+              </div>
+            ) : (
+              <div className="expense-list">
+                {userexp.map((item) => (
+                  <Items key={item._id} data={item} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default Home
+export default Home;

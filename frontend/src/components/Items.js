@@ -1,44 +1,56 @@
-import React from 'react'
-import {AiFillDelete} from 'react-icons/ai'
+import React from 'react';
+import { AiFillDelete } from 'react-icons/ai';
 import { deleteExpense } from '../utils/renders';
+
+const CATEGORY_CONFIG = {
+  Grocery:  { icon: '🛒', color: '#22c55e', bg: 'rgba(34,197,94,0.15)' },
+  Vehicle:  { icon: '🚗', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+  Shopping: { icon: '🛍️', color: '#a855f7', bg: 'rgba(168,85,247,0.15)' },
+  Travel:   { icon: '✈️', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+  Food:     { icon: '🍔', color: '#ef4444', bg: 'rgba(239,68,68,0.15)'  },
+  Fun:      { icon: '🎮', color: '#ec4899', bg: 'rgba(236,72,153,0.15)' },
+  Other:    { icon: '📦', color: '#94a3b8', bg: 'rgba(148,163,184,0.15)'},
+};
 
 function Items(props) {
   const exp = props.data;
- 
-  // console.log(Date.parse(exp.date));
-  function getDate(){
-  let dater = new Date(Date.parse(exp.date));
-  let txt = dater.toString();
-  // console.log(typeof txt)
-  // console.log(txt)
-    let date =txt.substring(8,10) + " " + txt.substring(4,7);
-    return date;
-  }
+  const config = CATEGORY_CONFIG[exp.category] || CATEGORY_CONFIG['Other'];
+
+  const getDate = () => {
+    const d = new Date(Date.parse(exp.date));
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const handleDelete = () => {
+    if (window.confirm(`Delete ₹${exp.amount} (${exp.category})?`)) {
+      deleteExpense({ expenseId: exp._id, userId: exp.usersid });
+    }
+  };
+
   return (
-    <div className='flex bg-black rounded-2xl font-mont w-full p-5 flex-col smr gap-8 '>
-        <div className='text-white flex  justify-between smr  '>
-        <p className='text-white font-bold text-2xl justify-between font-mont '>₹ {exp.amount}</p>
-        <p className='border-2 rounded-full text-black font-bold font-mont bg-white pl-2 pr-2 pt-0.5 pb-0.5 h-fit text-center text-sm' >{getDate()}</p>
+    <div className="expense-card" style={{ borderLeft: `3px solid ${config.color}` }}>
+      <div className="expense-card-top">
+        <div className="expense-category-icon" style={{ background: config.bg, color: config.color }}>
+          {config.icon}
         </div>
-        <div className='grid grid-flow-col  justify-between smr  '>
-            <div className='text-white text-center mt-1 category w-fit p-1 pl-2 pr-2  h-fit  rounded-full border-2 text-sm '><p>{exp.category}</p></div>
-      
-           <a onClick={()=>{
-          let datar = {
-            expenseId : exp._id,
-            userId : exp.usersid
-          };
-          // console.log(datar)
-          deleteExpense(datar )}
-          // window.location.reload();
-        }  href="#_" className="rounded-md w-fit px-3.5 py-2 m-1 overflow-hidden relative group cursor-pointer border-2 font-medium border-indigo-600 text-white">
-      <span className="absolute w-64 h-0 transition-all duration-300 origin-center rotate-45 -translate-x-20 bg-indigo-600 top-1/2 group-hover:h-64 group-hover:-translate-y-32 ease"></span>
-      <span className="relative text-white  transition duration-300 group-hover:text-white ease"><AiFillDelete></AiFillDelete></span>
-      </a>
-        
+        <div className="expense-info">
+          <span className="expense-category" style={{ color: config.color }}>{exp.category}</span>
+          <span className="expense-date">{getDate()}</span>
         </div>
+        <div className="expense-right">
+          <span className="expense-amount">₹{Number(exp.amount).toLocaleString('en-IN')}</span>
+          <button
+            className="delete-btn"
+            onClick={handleDelete}
+            title="Delete expense"
+            aria-label="Delete expense"
+          >
+            <AiFillDelete />
+          </button>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default Items
+export default Items;

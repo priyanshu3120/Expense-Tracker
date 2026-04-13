@@ -5,63 +5,80 @@ import { sortCategoryWise } from '../utils/seperator';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+const CATEGORIES = ['Grocery', 'Vehicle', 'Shopping', 'Travel', 'Food', 'Fun', 'Other'];
+
+const COLORS = [
+  { bg: 'rgba(34,197,94,0.75)',   border: '#22c55e' },
+  { bg: 'rgba(59,130,246,0.75)',  border: '#3b82f6' },
+  { bg: 'rgba(168,85,247,0.75)', border: '#a855f7' },
+  { bg: 'rgba(245,158,11,0.75)', border: '#f59e0b' },
+  { bg: 'rgba(239,68,68,0.75)',  border: '#ef4444' },
+  { bg: 'rgba(236,72,153,0.75)', border: '#ec4899' },
+  { bg: 'rgba(148,163,184,0.75)',border: '#94a3b8' },
+];
 
 export function Chartss(props) {
-//  console.log(props.exdata)
-  // const [expdata ,] = useState(props.exdata);
-  // const [totalexp , setTotalexp] = useState([]);
-  let categories = ['Grocery', 'Vehicle', 'Shopping', 'Travel', 'Food','Fun','Other'];
-  const totalexp = sortCategoryWise(props.exdata , categories);
-  // console.log(totalexp)
-///////////////////////////////////////////////////////////////////////////
-const data = {
-  labels: ['Grocery', 'Vehicle', 'Shopping', 'Travel', 'Food','Fun','Other'],
-  datasets: [
-    {
-      label: "Rs",
+  const totalexp = sortCategoryWise(props.exdata, CATEGORIES);
+  const hasData = totalexp.some(v => v > 0);
+
+  const data = {
+    labels: CATEGORIES,
+    datasets: [{
+      label: '₹ Spent',
       data: totalexp,
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.4)',
-        'rgba(54, 162, 235, 0.4)',
-        'rgba(255, 206, 86, 0.4)',
-        'rgba(75, 192, 192, 0.4)',
-        'rgba(153, 102, 255, 0.4)',
-        'rgba(230, 57, 70,0.4)',
-        'rgba(255, 159, 64, 0.4)',
-      ],
-      borderColor: [
-        'rgba(255, 99, 132, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)',
-        'rgba(230, 57, 70,1)',
-        'rgba(255, 159, 64, 1)',
-      ],
+      backgroundColor: COLORS.map(c => c.bg),
+      borderColor: COLORS.map(c => c.border),
       borderWidth: 2,
-    },
-  ],
-  options: {
-    
+      hoverOffset: 12,
+    }],
+  };
+
+  const options = {
+    cutout: '68%',
     plugins: {
-
-     labels: {
-          // formatter: function (value, context) {
-          //     return context.chart.data.labels[ context.dataIndex ] + ": ₹";
-          // },
-          // render : 'categories',
-          arc : false,
-          percision : 1,
-          fontSize : 20
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#e2e8f0',
+          font: { size: 12, family: 'Montserrat' },
+          padding: 16,
+          usePointStyle: true,
+          pointStyleWidth: 12,
+        },
       },
-  },
-  },
+      tooltip: {
+        backgroundColor: 'rgba(15,15,30,0.9)',
+        titleColor: '#f8fafc',
+        bodyColor: '#cbd5e1',
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        padding: 12,
+        callbacks: {
+          label: (ctx) => ` ₹${ctx.parsed.toLocaleString('en-IN')}`,
+        },
+      },
+    },
+    animation: {
+      animateScale: true,
+      animateRotate: true,
+      duration: 800,
+    },
+  };
+
+  if (!hasData) {
+    return (
+      <div className="chart-empty">
+        <div className="chart-empty-icon">📊</div>
+        <p className="chart-empty-text">No expenses yet</p>
+        <p className="chart-empty-sub">Add your first expense to see your spending breakdown</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="chart-wrapper">
+      <h3 className="chart-title">Spending Breakdown</h3>
+      <Doughnut data={data} options={options} />
+    </div>
+  );
 }
-
-
-;
-
-  //////////////////////////////////////////////////////////////////
-  return <Doughnut className='w-full h-full' data={data} />;
-}
-
